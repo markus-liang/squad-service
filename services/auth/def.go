@@ -11,9 +11,9 @@ type User struct {
 	Email     string         `db:"email" json:"email"`
 	Password  string         `db:"password" json:"password"`
 	Status    string         `db:"status" json:"status"`
+	RoleID    int            `db:"role_id" json:"role_id"`
 	CreatedAt mysql.NullTime `db:"created_at" json:"created_at"`
 	UpdatedAt mysql.NullTime `db:"updated_at" json:"updated_at"`
-	DeletedAt mysql.NullTime `db:"deleted_at" json:"deleted_at"`
 }
 
 // UserStatus posibility values : (A)ctive, (I)nactive, (B)anned

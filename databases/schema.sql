@@ -19,6 +19,17 @@ CREATE TABLE users
     CONSTRAINT `role_id` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
+CREATE TABLE postcodes (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  sub_district varchar(100) NOT NULL,
+  district varchar(100) NOT NULL,
+  city varchar(100) NOT NULL,
+  province varchar(100) NOT NULL,
+  postcode varchar(5) NOT NULL,
+  PRIMARY KEY (id),
+  KEY ixkodepos (postcode)
+)
+
 -- INITIAL DATA
 INSERT INTO `roles` VALUES (1,'admin','2020-05-07 18:00:00',NULL);
 INSERT INTO `users` VALUES (1,'markus.liang@gmail.com','m123','A',1,'2020-05-07 18:00:00',NULL);

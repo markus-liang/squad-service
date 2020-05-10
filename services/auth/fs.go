@@ -19,6 +19,13 @@ var dbmap = initDb()
 // SERVICES //
 //////////////
 
+// Authorize (Public). A middleware for requests authorization
+func Authorize() (bool, string) {
+	// NO IMPLEMENTED YET!
+
+	return false, "Not Implemented Yet!"
+}
+
 // Login (Public) endpoint to be called
 func Login(c *gin.Context) {
 	var userParam User
@@ -100,7 +107,7 @@ func goDotEnvVariable(key string) string {
 }
 
 func initDb() *gorp.DbMap {
-	db, err := sql.Open("mysql", "root:12345678@tcp(127.0.0.1:3306)/my_auth?parseTime=true")
+	db, err := sql.Open("mysql", "root:12345678@tcp(127.0.0.1:3306)/tcf?parseTime=true")
 	checkErr(err, "sql.Open failed")
 
 	dialect := gorp.MySQLDialect{"InnoDB", "UTF8"}

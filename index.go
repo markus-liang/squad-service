@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http"
 	auth "tcf-service/services/auth"
 
 	"github.com/gin-gonic/gin"
@@ -9,19 +8,26 @@ import (
 
 func main() {
 	r := gin.Default()
-
-	/* sample routes */
-	r.GET("/", index)
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "pong"})
-	})
-	/* end of sample routes */
+	r.Use(authMiddleware())
 
 	r.POST("/login", auth.Login)
 
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
 
-func index(c *gin.Context) {
-	c.String(http.StatusOK, "Hello brother!")
+func authMiddleware() gin.HandlerFunc {
+	// Do some initialization logic here
+	isAuthrized, message := auth.Authorize()
+
+	return func(c *gin.Context) {
+		if !isAuthrized {
+			respondWithError(c, 401, message)
+			return
+		}
+		c.Next()
+	}
+}
+
+func respondWithError(c *gin.Context, code int, message interface{}) {
+	c.AbortWithStatusJSON(code, gin.H{"error": message})
 }
