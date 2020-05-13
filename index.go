@@ -1,33 +1,30 @@
 package main
 
 import (
-	auth "tcf-service/services/auth"
+	"log"
+	auth "tcf-service/controllers/auth"
+	db "tcf-service/databases"
+	mid "tcf-service/middlewares"
+	mod "tcf-service/models"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 func main() {
+	con, err := mod.InitDB()
+	defer con.Close()
+	if err != nil {
+		log.Panic(err)
+	}
+
+	db.Migrate(con)
+
 	r := gin.Default()
-	r.Use(authMiddleware())
+	r.Use(mid.DBMiddleware(con))
+	r.Use(mid.AuthMiddleware())
 
 	r.POST("/login", auth.Login)
 
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
-}
-
-func authMiddleware() gin.HandlerFunc {
-	// Do some initialization logic here
-	isAuthrized, message := auth.Authorize()
-
-	return func(c *gin.Context) {
-		if !isAuthrized {
-			respondWithError(c, 401, message)
-			return
-		}
-		c.Next()
-	}
-}
-
-func respondWithError(c *gin.Context, code int, message interface{}) {
-	c.AbortWithStatusJSON(code, gin.H{"error": message})
 }
