@@ -1,10 +1,14 @@
 package models
 
-import "github.com/jinzhu/gorm"
+import (
+	h "tcf-service/helpers"
+
+	"github.com/jinzhu/gorm"
+)
 
 // InitDB : initialize DB connection
 func InitDB() (*gorm.DB, error) {
-	db, err := gorm.Open("mysql", "root:12345678@tcp(127.0.0.1:3306)/tcf?parseTime=true")
+	db, err := gorm.Open(h.Env("DB_DIALECT"), h.Env("DB_CONNECTION_STR"))
 	if err != nil {
 		return nil, err
 	}

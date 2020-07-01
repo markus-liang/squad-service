@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	c "tcf-service/controllers"
+	h "tcf-service/helpers"
 	m "tcf-service/models"
 
 	"github.com/dgrijalva/jwt-go"
@@ -60,7 +60,7 @@ func createToken(user m.User) (string, error) {
 	atClaims["email"] = user.Email
 	atClaims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
-	token, err := at.SignedString([]byte(c.Env("JWT_SECRET")))
+	token, err := at.SignedString([]byte(h.Env("JWT_SECRET")))
 	if err != nil {
 		return "", err
 	}
