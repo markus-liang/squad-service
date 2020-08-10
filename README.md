@@ -1,2 +1,2 @@
-# tcf-service
-The Convenience Foods Projects
+# squad-service
+Squad Project
