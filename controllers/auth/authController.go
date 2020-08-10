@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	h "tcf-service/helpers"
-	m "tcf-service/models"
+	h "squad-service/helpers"
+	m "squad-service/models"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"

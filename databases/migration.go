@@ -2,7 +2,7 @@ package databases
 
 import (
 	"fmt"
-	m "tcf-service/models"
+	m "squad-service/models"
 
 	"github.com/jinzhu/gorm"
 )

@@ -2,10 +2,10 @@ package main
 
 import (
 	"log"
-	auth "tcf-service/controllers/auth"
-	db "tcf-service/databases"
-	mid "tcf-service/middlewares"
-	mod "tcf-service/models"
+	auth "squad-service/controllers/auth"
+	db "squad-service/databases"
+	mid "squad-service/middlewares"
+	mod "squad-service/models"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/jinzhu/gorm/dialects/mysql"

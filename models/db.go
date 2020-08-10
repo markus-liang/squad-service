@@ -1,7 +1,7 @@
 package models
 
 import (
-	h "tcf-service/helpers"
+	h "squad-service/helpers"
 
 	"github.com/jinzhu/gorm"
 )

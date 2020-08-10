@@ -1,4 +1,4 @@
-module tcf-service
+module squad-service
 
 go 1.14
 
