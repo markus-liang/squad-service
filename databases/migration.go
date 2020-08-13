@@ -23,8 +23,8 @@ func Migrate(db *gorm.DB) {
 	db.Model(m.User{}).AddForeignKey("role_id", "roles(id)", "RESTRICT", "RESTRICT")
 
 	// seeders
-	// seedRoles(db)
-	// seedUsers(db)
+	seedRoles(db)
+	seedUsers(db)
 }
 
 /////////////
