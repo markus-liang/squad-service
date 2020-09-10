@@ -2,29 +2,86 @@ package main
 
 import (
 	"log"
-	auth "squad-service/controllers/auth"
+	
+	"squad-service/controllers/user"
 	db "squad-service/databases"
+	h "squad-service/helpers"
 	mid "squad-service/middlewares"
-	mod "squad-service/models"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v7"
+	"github.com/jinzhu/gorm"
+
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 func main() {
-	con, err := mod.InitDB()
+	// initiations
+	con, err := initDB()
 	defer con.Close()
 	if err != nil {
 		log.Panic(err)
 	}
 
+	redis, err := initRedis()
+	if err != nil {
+		log.Panic(err)
+	}
+
+	// migrations
 	db.Migrate(con)
 
 	r := gin.Default()
-	r.Use(mid.DBMiddleware(con))
-	r.Use(mid.AuthMiddleware())
 
-	r.POST("/login", auth.Login)
+	// global middlewares
+	r.Use(mid.CtxMiddleware(con, redis))
 
-	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	// routes with no auth
+	r.GET("/users/activate", user.Activate)
+	r.POST("/users/request_code", user.RequestCode)
+	r.POST("/users/signin", user.Signin)
+	r.POST("/users/signup", user.Signup)
+	r.POST("/users/verify_code", user.VerifyCode)
+
+	// routes with auth 
+	authGroup := r.Group("/")
+	authGroup.Use(mid.AuthMiddleware())
+	{
+		authGroup.GET("/test", user.TestAuth)
+		authGroup.POST("/users/signout", user.Signout)
+
+		/*
+		authGroup.GET("/contacs/list", contacts.List)
+		authGroup.POST("/projects/create", project.Create)
+		authGroup.GET("/projects/list", project.List)
+		authGroup.POST("/users/set_password", user.SetPassword)
+		*/
+	}
+
+
+	r.Run() // listen and serve on 0.0.0.0:8080
+}
+
+func initDB() (*gorm.DB, error) {
+	db, err := gorm.Open(h.Env("DB_DIALECT"), h.Env("DB_CONNECTION_STR"))
+	if err != nil {
+		return nil, err
+	}
+	if err = db.DB().Ping(); err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
+func initRedis() (*redis.Client, error)  {
+	//Initializing redis
+	dsn := h.Env("REDIS_DSN")
+	client := redis.NewClient(&redis.Options{
+		Addr: dsn, //redis port
+	})
+	_, err := client.Ping().Result()
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }
