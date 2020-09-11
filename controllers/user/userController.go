@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"reflect"
 
 	h "squad-service/helpers"
 	m "squad-service/models"
@@ -28,30 +29,30 @@ func Signin(c *gin.Context) {
 	var userDB m.User
 
 	if err := c.ShouldBindJSON(&userParam); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, "Invalid json input provided")
+		h.RespondWithError(c, http.StatusUnprocessableEntity, "Invalid json input provided")
 		return
 	}
 
-	if db.Where("email = ?", userParam.Email).First(&userDB); (userDB == m.User{}) {
-		c.JSON(http.StatusUnauthorized, "User not found")
+	if db.Where("email = ?", userParam.Email).First(&userDB); (reflect.DeepEqual(userDB, m.User{})) {
+		h.RespondWithError(c, http.StatusUnauthorized, "User not found")
 		return
 	} else if userDB.Password != userParam.Password {
-		c.JSON(http.StatusUnauthorized, "Wrong password")
+		h.RespondWithError(c, http.StatusUnauthorized, "Wrong password")
 		return
 	} else if userDB.Status != m.UserStatus.Active {
-		c.JSON(http.StatusUnauthorized, "User is inactive, contact your administrator")
+		h.RespondWithError(c, http.StatusUnauthorized, "User is inactive, contact your administrator")
 		return
 	}
 
 	token, err := createToken(userDB)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, err.Error())
+		h.RespondWithError(c, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
 	saveErr := saveAuth(userDB.ID, token, redis)
 	if saveErr != nil {
-		c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
+		h.RespondWithError(c, http.StatusUnprocessableEntity, saveErr.Error())
 	}	
 
 	tokens := map[string]string{
@@ -59,22 +60,21 @@ func Signin(c *gin.Context) {
 		"refresh_token": token.RefreshToken,
 	}
 
-	c.JSON(http.StatusOK, tokens)
+	h.RespondSuccess(c, tokens)
 }
 
 func TestAuth(c *gin.Context){
 	// user_email := c.MustGet("user_email").(string)
 	access_uuid := c.MustGet("access_uuid").(string)
-
-	c.JSON(http.StatusOK, "access_uuid = " + access_uuid)
+	h.RespondSuccess(c, "access_uuid = " + access_uuid)
 }
 
 func Activate(c *gin.Context){
-	c.JSON(http.StatusUnprocessableEntity, "To be implemented")
+	h.RespondWithError(c, http.StatusUnprocessableEntity, "To be implemented")
 }
 
 func SetPassword(c *gin.Context){
-	c.JSON(http.StatusUnprocessableEntity, "To be implemented")
+	h.RespondWithError(c, http.StatusUnprocessableEntity, "To be implemented")
 }
 
 func Signout(c *gin.Context){
@@ -83,22 +83,21 @@ func Signout(c *gin.Context){
 
 	_, err := redis.Del(access_uuid).Result()
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, err)
+		h.RespondWithError(c, http.StatusUnprocessableEntity, err)
 	}
-	c.JSON(http.StatusOK, "OK")
-
+	h.RespondSuccess(c, nil)
 }
 
 func Signup(c *gin.Context){
-	c.JSON(http.StatusUnprocessableEntity, "To be implemented")
+	h.RespondWithError(c, http.StatusUnprocessableEntity, "To be implemented")
 }
 
 func RequestCode(c *gin.Context){
-	c.JSON(http.StatusUnprocessableEntity, "To be implemented")
+	h.RespondWithError(c, http.StatusUnprocessableEntity, "To be implemented")
 }
 
 func VerifyCode(c *gin.Context){
-	c.JSON(http.StatusUnprocessableEntity, "To be implemented")
+	h.RespondWithError(c, http.StatusUnprocessableEntity, "To be implemented")
 }
 
 /////////////

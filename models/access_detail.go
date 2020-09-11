@@ -1,7 +1,7 @@
 package models
 
 type AccessDetails struct {
-    AccessUuid string
-    UserId   uint64
+    AccessUUID string
+    UserID   uint64
     UserEmail   string
 }

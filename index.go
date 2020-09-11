@@ -4,6 +4,8 @@ import (
 	"log"
 	
 	"squad-service/controllers/user"
+	"squad-service/controllers/contact"
+	"squad-service/controllers/project"
 	db "squad-service/databases"
 	h "squad-service/helpers"
 	mid "squad-service/middlewares"
@@ -48,12 +50,11 @@ func main() {
 	authGroup.Use(mid.AuthMiddleware())
 	{
 		authGroup.GET("/test", user.TestAuth)
-		authGroup.POST("/users/signout", user.Signout)
-
-		/*
-		authGroup.GET("/contacs/list", contacts.List)
-		authGroup.POST("/projects/create", project.Create)
+		authGroup.GET("/contacts/list", contact.List)
 		authGroup.GET("/projects/list", project.List)
+		authGroup.POST("/users/signout", user.Signout)
+		/*
+		authGroup.POST("/projects/create", project.Create)
 		authGroup.POST("/users/set_password", user.SetPassword)
 		*/
 	}

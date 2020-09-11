@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/jinzhu/gorm"
+	"time"
 )
 
 /* ATTRIBUTES */
@@ -9,11 +9,15 @@ import (
 
 //User model definition
 type User struct {
-	gorm.Model
-	Email    string `gorm:"size:50;unique_index"`
+	ID          uint       `gorm:"primary_key" json:"-"`
+	CreatedAt   time.Time  `json:"-"`
+	UpdatedAt   time.Time  `json:"-"`
+	DeletedAt   *time.Time `json:"-"`	
+	Email    string `gorm:"size:50;uniqueIndex"`
 	Name     string `gorm:"size:50"`
 	Password string `gorm:"size:100"`
 	Status   string `gorm:"size:1"`
+	Project	 []Project
 }
 
 // UserStatus posibility values : (A)ctive, (I)nactive

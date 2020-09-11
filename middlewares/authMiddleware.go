@@ -22,12 +22,13 @@ func AuthMiddleware() gin.HandlerFunc {
 		isAuthorized, access, message := authorize(c)		
 
 		if !isAuthorized{
-			respondWithError(c, 401, message)
+			h.RespondWithError(c, 401, message)
 			return
 		}
 
+		c.Set("user_id", access.UserID)
 		c.Set("user_email", access.UserEmail)
-		c.Set("access_uuid", access.AccessUuid)
+		c.Set("access_uuid", access.AccessUUID)
 		c.Next()
 	}
 }
@@ -40,19 +41,19 @@ func AuthMiddleware() gin.HandlerFunc {
 func authorize(c *gin.Context) (bool, *m.AccessDetails, string) {
 	access, err := extractTokenMetadata(c)
 	if err != nil {
-		return false, nil, "unauthorized : " + err.Error()
+		return false, nil, err.Error()
 	}
 
 	isExist, err := fetchAuthFromRedish(c, access)
 	if err != nil {
-		return false, nil, "unauthorized : user has logged out"
+		return false, nil, "user has logged out"
 	}
 
 	if c.Request.Header.Get("user_email") != access.UserEmail {
-		return false, nil, "unauthorized : wrong user"
+		return false, nil, "wrong user"
 	}
 
-	return isExist, access, "ok"
+	return isExist, access, "OK"
 }
 
 func extractToken(c *gin.Context) string {
@@ -73,7 +74,7 @@ func extractTokenMetadata(c *gin.Context) (*m.AccessDetails, error) {
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if ok && token.Valid {
-		accessUuid, ok := claims["access_uuid"].(string)
+		accessUUID, ok := claims["access_uuid"].(string)
 		if !ok {
 			return nil, err
 		}
@@ -81,13 +82,13 @@ func extractTokenMetadata(c *gin.Context) (*m.AccessDetails, error) {
 		if !ok {
 			return nil, err
 		}
-		userId, err := strconv.ParseUint(fmt.Sprintf("%.f", claims["user_id"]), 10, 64)
+		userID, err := strconv.ParseUint(fmt.Sprintf("%.f", claims["user_id"]), 10, 64)
 		if err != nil {
 			return nil, err
 		}
 		return &m.AccessDetails{
-			AccessUuid: accessUuid,
-			UserId: userId,
+			AccessUUID: accessUUID,
+			UserID: userID,
 			UserEmail: email,
 		}, nil
 	}
@@ -97,7 +98,7 @@ func extractTokenMetadata(c *gin.Context) (*m.AccessDetails, error) {
 func fetchAuthFromRedish(c *gin.Context, authD *m.AccessDetails) (bool, error) {
 	redis := c.MustGet("redis").(*redis.Client)
 
-	_, err := redis.Get(authD.AccessUuid).Result()
+	_, err := redis.Get(authD.AccessUUID).Result()
 	if err != nil {
 		return false, err
 	}
@@ -105,9 +106,11 @@ func fetchAuthFromRedish(c *gin.Context, authD *m.AccessDetails) (bool, error) {
 	return true, nil
 }
 
+/*
 func respondWithError(c *gin.Context, code int, message interface{}) {
 	c.AbortWithStatusJSON(code, gin.H{"error": message})
 }
+*/
 
 func verifyToken(c *gin.Context) (*jwt.Token, error) {
 	tokenString := extractToken(c)

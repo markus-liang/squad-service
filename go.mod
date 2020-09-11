@@ -11,4 +11,5 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/lib/pq v1.5.2
 	github.com/twinj/uuid v1.0.0 // indirect
+	github.com/mickep76/mapslice-json latest
 )
