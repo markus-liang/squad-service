@@ -52,9 +52,9 @@ func main() {
 		authGroup.GET("/test", user.TestAuth)
 		authGroup.GET("/contacts/list", contact.List)
 		authGroup.GET("/projects/list", project.List)
+		authGroup.POST("/projects/create", project.Create)
 		authGroup.POST("/users/signout", user.Signout)
 		/*
-		authGroup.POST("/projects/create", project.Create)
 		authGroup.POST("/users/set_password", user.SetPassword)
 		*/
 	}

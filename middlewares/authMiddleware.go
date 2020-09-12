@@ -26,6 +26,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		// add context
 		c.Set("user_id", access.UserID)
 		c.Set("user_email", access.UserEmail)
 		c.Set("access_uuid", access.AccessUUID)
@@ -102,15 +103,9 @@ func fetchAuthFromRedish(c *gin.Context, authD *m.AccessDetails) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	//userID, _ := strconv.ParseUint(userid, 10, 64)
+
 	return true, nil
 }
-
-/*
-func respondWithError(c *gin.Context, code int, message interface{}) {
-	c.AbortWithStatusJSON(code, gin.H{"error": message})
-}
-*/
 
 func verifyToken(c *gin.Context) (*jwt.Token, error) {
 	tokenString := extractToken(c)

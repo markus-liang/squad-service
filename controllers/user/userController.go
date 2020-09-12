@@ -105,7 +105,7 @@ func VerifyCode(c *gin.Context){
 /////////////
 
 // saveAuth is a function to save created token to redis
-func saveAuth(userid uint, td *m.TokenDetail, redis *redis.Client) error {
+func saveAuth(userid uint64, td *m.TokenDetail, redis *redis.Client) error {
     at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
     rt := time.Unix(td.RtExpires, 0)
     now := time.Now()
@@ -124,7 +124,7 @@ func saveAuth(userid uint, td *m.TokenDetail, redis *redis.Client) error {
 // createToken is a function to generate new token
 func createToken(user m.User) (*m.TokenDetail, error) {
 	td := &m.TokenDetail{}
-	td.AtExpires = time.Now().Add(time.Minute * 15).Unix()
+	td.AtExpires = time.Now().Add(time.Minute * 150).Unix()
 	td.AccessUuid = uuid.NewV4().String()
 
 	td.RtExpires = time.Now().Add(time.Hour * 24 * 7).Unix()

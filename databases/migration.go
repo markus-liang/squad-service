@@ -77,9 +77,9 @@ func seedProjects(db *gorm.DB) {
 
 	// project squads
 	var squads []m.ProjectSquad = []m.ProjectSquad{
-		m.ProjectSquad{ID:1, ProjectID: 1, Email: "abdul@gmail.com", Status: "4", ChipinAmount:2500000},
-		m.ProjectSquad{ID:2, ProjectID: 1, Email: "andrew@gmail.com", Status: "2"},
-		m.ProjectSquad{ID:3, ProjectID: 1, Email: "sisca@gmail.com", Status: "1"},
+		m.ProjectSquad{ID:1, ProjectID: 1, Email: "abdul@gmail.com", Status: m.ProjectSquadStatus.PaymentConfirmed, ChipinAmount:2500000},
+		m.ProjectSquad{ID:2, ProjectID: 1, Email: "andrew@gmail.com", Status: m.ProjectSquadStatus.WaitingPayment},
+		m.ProjectSquad{ID:3, ProjectID: 1, Email: "sisca@gmail.com", Status: m.ProjectSquadStatus.Reject},
 	}
 	for _, squad := range squads {
 		db.Create(&squad)
