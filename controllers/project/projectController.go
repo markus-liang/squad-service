@@ -19,22 +19,21 @@ func Create(c *gin.Context){
 
 	var body interface{}
 	if err := c.ShouldBindJSON(&body); err != nil {
-		h.RespondWithError(c, http.StatusUnprocessableEntity, err.Error)
+		h.RespondWithError(c, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
 	input := body.(map[string]interface{})
-	endDate,_ := time.Parse(time.RFC3339, input["end_date"].(string))
 
 	var squads []m.ProjectSquad
 	for _, j := range input["squad_member"].([]interface{}){
-
 		squads = append(squads, m.ProjectSquad{
 			Email: j.(map[string]interface{})["email"].(string),
 			Status: m.ProjectSquadStatus.Invited,			
 		})
 	}
 
+	endDate,_ := time.Parse(time.RFC3339, input["end_date"].(string))
 	data := m.Project{
 		UserID: userID,
 		Leader: userEmail,
@@ -46,9 +45,10 @@ func Create(c *gin.Context){
 	}
 	
 	if err := db.Create(&data); err.Error != nil{
-		h.RespondWithError(c, http.StatusUnprocessableEntity, err.Error)		
+		h.RespondWithError(c, http.StatusUnprocessableEntity, err.Error)
+		return
 	}
-
+	
 	h.RespondSuccess(c, nil)
 }
 

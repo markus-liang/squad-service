@@ -110,9 +110,9 @@ func fetchAuthFromRedish(c *gin.Context, authD *m.AccessDetails) (bool, error) {
 func verifyToken(c *gin.Context) (*jwt.Token, error) {
 	tokenString := extractToken(c)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-	}
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
 		return []byte(h.Env("JWT_ACCESS_SECRET")), nil
 	})
 	if err != nil {

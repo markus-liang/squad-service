@@ -39,12 +39,15 @@ func main() {
 	r.Use(mid.CtxMiddleware(con, redis))
 
 	// routes with no auth
+/*
 	r.GET("/users/activate", user.Activate)
 	r.POST("/users/request_code", user.RequestCode)
+*/
 	r.POST("/users/signin", user.Signin)
 	r.POST("/users/signup", user.Signup)
+/*
 	r.POST("/users/verify_code", user.VerifyCode)
-
+*/
 	// routes with auth 
 	authGroup := r.Group("/")
 	authGroup.Use(mid.AuthMiddleware())

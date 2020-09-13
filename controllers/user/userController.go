@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"fmt"
 	"reflect"
 
 	h "squad-service/helpers"
@@ -53,6 +54,7 @@ func Signin(c *gin.Context) {
 	saveErr := saveAuth(userDB.ID, token, redis)
 	if saveErr != nil {
 		h.RespondWithError(c, http.StatusUnprocessableEntity, saveErr.Error())
+		return
 	}	
 
 	tokens := map[string]string{
@@ -84,12 +86,35 @@ func Signout(c *gin.Context){
 	_, err := redis.Del(access_uuid).Result()
 	if err != nil {
 		h.RespondWithError(c, http.StatusUnprocessableEntity, err)
+		return
 	}
 	h.RespondSuccess(c, nil)
 }
 
 func Signup(c *gin.Context){
-	h.RespondWithError(c, http.StatusUnprocessableEntity, "To be implemented")
+	var user m.User
+	if err := c.ShouldBindJSON(&user); err != nil {
+		h.RespondWithError(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	if err := user.Validate(c, "signup"); err != nil {
+		h.RespondWithError(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	user.Status = m.UserStatus.Inactive
+	db := c.MustGet("db_mysql").(*gorm.DB)
+	if err := db.Create(&user); err.Error != nil{
+		fmt.Println("save");
+		fmt.Println(err);		
+		h.RespondWithError(c, http.StatusUnprocessableEntity, err.Error)
+		return
+	}
+
+	h.RespondSuccess(c, nil)
+
+	//h.RespondWithError(c, http.StatusUnprocessableEntity, "To be implemented")
 }
 
 func RequestCode(c *gin.Context){

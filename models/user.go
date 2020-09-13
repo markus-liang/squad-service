@@ -1,7 +1,11 @@
 package models
 
 import (
+	"errors"
+	"strings"
 	"time"
+	"github.com/jinzhu/gorm"
+	"github.com/gin-gonic/gin"
 )
 
 /* ATTRIBUTES */
@@ -26,8 +30,37 @@ var UserStatus = &userStatusList{
 	Inactive: "I",
 }
 
+func (u *User) Validate(c *gin.Context, action string) error{
+	switch strings.ToLower(action) {
+	case "signup":
+		db := c.MustGet("db_mysql").(*gorm.DB)
+		var result User
+
+		if strings.TrimSpace(u.Name) == "" {
+			return errors.New("Required name")
+		}
+		if len(strings.TrimSpace(u.Password)) < 8 {
+			return errors.New("Required password with minimum 8 characters")
+		}
+		if strings.TrimSpace(u.Email) == "" {
+			return errors.New("Required email")
+		}
+		if db.Where("email = ?", u.Email).First(&result); result.Email == u.Email {
+			return errors.New("User already exists")
+		}
+
+		return nil
+	default:
+		return nil
+	}
+
+}
+
+
 // PRIVATE
 type userStatusList struct {
 	Active   string
 	Inactive string
 }
+
+
