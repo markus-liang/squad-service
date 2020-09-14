@@ -4,12 +4,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-	"fmt"
-	"reflect"
-
 	h "squad-service/helpers"
 	m "squad-service/models"
-
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v7"
@@ -34,13 +30,15 @@ func Signin(c *gin.Context) {
 		return
 	}
 
-	if db.Where("email = ?", userParam.Email).First(&userDB); (reflect.DeepEqual(userDB, m.User{})) {
+	if db.Where("email = ?", userParam.Email).First(&userDB); userDB.Email != userParam.Email {
 		h.RespondWithError(c, http.StatusUnauthorized, "User not found")
 		return
-	} else if userDB.Password != userParam.Password {
+	}
+	if err := userParam.VerifyPassword(userDB.Password, userParam.Password); err != nil {
 		h.RespondWithError(c, http.StatusUnauthorized, "Wrong password")
 		return
-	} else if userDB.Status != m.UserStatus.Active {
+	}
+	if userDB.Status != m.UserStatus.Active {
 		h.RespondWithError(c, http.StatusUnauthorized, "User is inactive, contact your administrator")
 		return
 	}
@@ -65,14 +63,32 @@ func Signin(c *gin.Context) {
 	h.RespondSuccess(c, tokens)
 }
 
-func TestAuth(c *gin.Context){
-	// user_email := c.MustGet("user_email").(string)
-	access_uuid := c.MustGet("access_uuid").(string)
-	h.RespondSuccess(c, "access_uuid = " + access_uuid)
-}
-
 func Activate(c *gin.Context){
-	h.RespondWithError(c, http.StatusUnprocessableEntity, "To be implemented")
+	db := c.MustGet("db_mysql").(*gorm.DB)
+	redis := c.MustGet("redis").(*redis.Client)
+
+	var email, code string
+	var isExist bool
+
+	if email, isExist = c.GetQuery("email"); !isExist {
+		h.RespondWithError(c, http.StatusUnprocessableEntity, "Email is mandatory")
+		return
+	}
+	if code, isExist = c.GetQuery("activation_code"); !isExist {
+		h.RespondWithError(c, http.StatusUnprocessableEntity, "Activation code is mandatory")
+		return
+	}
+
+	_, err := redis.Get("uact_" + email + "_" + code).Result()
+	if err != nil {
+		h.RespondWithError(c, http.StatusUnprocessableEntity, "Activation failed")
+		return
+	}	
+
+	db.Model(m.User{}).Where("email = ?", email).Updates(m.User{Status:m.UserStatus.Active})
+
+	h.RespondSuccess(c, nil)
+	return
 }
 
 func SetPassword(c *gin.Context){
@@ -98,23 +114,27 @@ func Signup(c *gin.Context){
 		return
 	}
 
+	user.Prepare()
 	if err := user.Validate(c, "signup"); err != nil {
 		h.RespondWithError(c, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
-	user.Status = m.UserStatus.Inactive
+	user.HashPassword()
 	db := c.MustGet("db_mysql").(*gorm.DB)
 	if err := db.Create(&user); err.Error != nil{
-		fmt.Println("save");
-		fmt.Println(err);		
 		h.RespondWithError(c, http.StatusUnprocessableEntity, err.Error)
 		return
 	}
 
-	h.RespondSuccess(c, nil)
+	activationCode, _ := user.GenerateActivationCode(c)
 
-	//h.RespondWithError(c, http.StatusUnprocessableEntity, "To be implemented")
+	h.SendMail(
+		[]string{user.Email}, 
+		"Squad Activation", 
+		"Hi, " + user.Name + "<br /><br />Please follow the link below to activate your account.<br />" + h.Env("ACTIVATION_ADDR") + "?email=" + user.Email+"&activation_code=" + activationCode)
+
+	h.RespondSuccess(c, nil)
 }
 
 func RequestCode(c *gin.Context){
@@ -125,6 +145,18 @@ func VerifyCode(c *gin.Context){
 	h.RespondWithError(c, http.StatusUnprocessableEntity, "To be implemented")
 }
 
+
+func Test(c *gin.Context){
+	to := []string{"markus.liang@gmail.com"}
+	subject := "Test Email"
+	msg := "<html><body>Isi test email : <a href=\"http://www.google.com\"> klik disini </a></body></html>"
+
+	if _, err := h.SendMail(to, subject, msg); err != nil {
+		h.RespondWithError(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+	h.RespondSuccess(c, nil)
+}
 /////////////
 // PRIVATE //
 /////////////

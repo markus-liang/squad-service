@@ -40,19 +40,19 @@ func main() {
 
 	// routes with no auth
 /*
-	r.GET("/users/activate", user.Activate)
 	r.POST("/users/request_code", user.RequestCode)
 */
+	r.GET("/users/activate", user.Activate)
 	r.POST("/users/signin", user.Signin)
 	r.POST("/users/signup", user.Signup)
 /*
 	r.POST("/users/verify_code", user.VerifyCode)
 */
+	r.GET("/test", user.Test)
 	// routes with auth 
 	authGroup := r.Group("/")
 	authGroup.Use(mid.AuthMiddleware())
 	{
-		authGroup.GET("/test", user.TestAuth)
 		authGroup.GET("/contacts/list", contact.List)
 		authGroup.GET("/projects/list", project.List)
 		authGroup.POST("/projects/create", project.Create)
