@@ -29,7 +29,6 @@ func Signin(c *gin.Context) {
 		h.RespondWithError(c, http.StatusUnprocessableEntity, "Invalid json input provided")
 		return
 	}
-
 	if db.Where("email = ?", userParam.Email).First(&userDB); userDB.Email != userParam.Email {
 		h.RespondWithError(c, http.StatusUnauthorized, "User not found")
 		return
@@ -92,7 +91,27 @@ func Activate(c *gin.Context){
 }
 
 func SetPassword(c *gin.Context){
-	h.RespondWithError(c, http.StatusUnprocessableEntity, "To be implemented")
+	db := c.MustGet("db_mysql").(*gorm.DB)
+	userEmail := c.MustGet("user_email").(string)
+
+	var userParam m.User
+	var userDB m.User
+
+	if err := c.ShouldBindJSON(&userParam); err != nil {
+		h.RespondWithError(c, http.StatusUnprocessableEntity, "Invalid json input provided")
+		return
+	}
+	if db.Where("email = ?", userEmail).First(&userDB); userDB.Email != userEmail {
+		h.RespondWithError(c, http.StatusUnauthorized, "User not found")
+		return
+	}
+	userParam.Prepare()
+	userDB.Password = userParam.Password
+	userDB.HashPassword()
+
+	db.Save(&userDB)
+
+	h.RespondSuccess(c, nil)
 }
 
 func Signout(c *gin.Context){
@@ -127,7 +146,7 @@ func Signup(c *gin.Context){
 		return
 	}
 
-	activationCode, _ := user.GenerateActivationCode(c)
+	activationCode, _ := user.GenerateCode(c, "uact")
 
 	h.SendMail(
 		[]string{user.Email}, 
@@ -138,11 +157,74 @@ func Signup(c *gin.Context){
 }
 
 func RequestCode(c *gin.Context){
-	h.RespondWithError(c, http.StatusUnprocessableEntity, "To be implemented")
+	db := c.MustGet("db_mysql").(*gorm.DB)
+
+	var userParam m.User
+	var userDB m.User
+
+	if err := c.ShouldBindJSON(&userParam); err != nil {
+		h.RespondWithError(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+	if db.Where("email = ?", userParam.Email).First(&userDB); userDB.Email != userParam.Email {
+		h.RespondWithError(c, http.StatusUnauthorized, "User not found")
+		return
+	}
+
+	verificationCode, _ := userDB.GenerateCode(c, "uver")
+
+	h.SendMail(
+		[]string{userDB.Email}, 
+		"Squad Verification Code", 
+		"Hi there,<br /><br /> Please input your verification code below to reset your password <br /><br /> Verification Code : " + verificationCode)
+
+	h.RespondSuccess(c, nil)
 }
 
 func VerifyCode(c *gin.Context){
-	h.RespondWithError(c, http.StatusUnprocessableEntity, "To be implemented")
+	db := c.MustGet("db_mysql").(*gorm.DB)
+	redis := c.MustGet("redis").(*redis.Client)
+
+	var userDB m.User
+	var body interface{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		h.RespondWithError(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+	input := body.(map[string]interface{})
+
+	if db.Where("email = ?", input["email"]).First(&userDB); userDB.Email != input["email"] {
+		h.RespondWithError(c, http.StatusUnauthorized, "User not found")
+		return
+	}
+	if userDB.Status != m.UserStatus.Active {
+		h.RespondWithError(c, http.StatusUnauthorized, "User is inactive, contact your administrator")
+		return
+	}
+	
+	if _, err := redis.Get("uver_" + userDB.Email + "_" + input["verification_code"].(string)).Result(); err != nil {
+		h.RespondWithError(c, http.StatusUnprocessableEntity, "Invalid Code")
+		return
+	}
+
+	token, err := createToken(userDB)
+	if err != nil {
+		h.RespondWithError(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	saveErr := saveAuth(userDB.ID, token, redis)
+	if saveErr != nil {
+		h.RespondWithError(c, http.StatusUnprocessableEntity, saveErr.Error())
+		return
+	}	
+
+	tokens := map[string]string{
+		"access_token":  token.AccessToken,
+		"refresh_token": token.RefreshToken,
+	}
+
+	h.RespondSuccess(c, tokens)
 }
 
 

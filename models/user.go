@@ -34,15 +34,22 @@ var UserStatus = &userStatusList{
 	Inactive: "I",
 }
 
-func (u *User) GenerateActivationCode(c *gin.Context) (string, error) {
+func (u *User) GenerateCode(c *gin.Context, t string) (string, error) {
 	redis := c.MustGet("redis").(*redis.Client)
 	now := time.Now()
 
 	rand.Seed(now.UnixNano())
 	code := strconv.Itoa(rand.Intn(89999) + 10000)
 
-	exp,_ := time.ParseDuration("24h")
-    err := redis.Set("uact_" + u.Email + "_" + code, code, exp).Err()
+	var exp time.Duration
+	if t == "uact" {
+		exp,_ = time.ParseDuration("24h")
+	}else{
+		exp,_ = time.ParseDuration("5m")		
+	}
+
+    err := redis.Set(t + "_" + u.Email + "_" + code, code, exp).Err()		
+
     if err != nil {
         return "", err
     }

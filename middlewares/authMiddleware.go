@@ -103,7 +103,6 @@ func fetchAuthFromRedish(c *gin.Context, authD *m.AccessDetails) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
 	return true, nil
 }
 
